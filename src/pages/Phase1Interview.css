@@ -1,0 +1,472 @@
+/* ===== Page base ===== */
+.p1-page {
+  min-height: 100vh;
+  background: #020617;
+  color: #f9fafb;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+}
+
+/* to separate DevNav from content a bit */
+.p1-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 32px 32px;
+}
+
+/* ===== Cheat buttons ===== */
+.p1-cheat-wrapper {
+  display: flex;
+  gap: 8px;
+}
+
+.p1-cheat-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid #1f2937;
+  background: #020617;
+  color: #e5e7eb;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.08s ease,
+    box-shadow 0.12s ease, border-color 0.12s ease;
+}
+
+.p1-cheat-btn:hover {
+  background: #0f172a;
+  border-color: #22c55e;
+  box-shadow: 0 0 18px rgba(34, 197, 94, 0.5);
+  transform: translateY(-1px);
+}
+
+/* phase pill on top-right */
+.p1-phase-pill {
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  font-size: 13px;
+  color: #e5e7eb;
+}
+
+/* ===== Main layout ===== */
+.p1-main {
+  padding: 16px 32px 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(260px, 1.5fr);
+  gap: 20px;
+}
+
+/* Left column */
+.p1-left {
+  background: #020617;
+}
+
+.p1-title {
+  margin: 6px 0 4px;
+  font-size: 26px;
+  font-weight: 650;
+}
+
+.p1-subtitle {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: #9ca3af;
+}
+
+/* common blocks */
+.p1-block {
+  margin-bottom: 16px;
+}
+
+.p1-block-label {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #9ca3af;
+  margin: 0 0 6px;
+}
+
+/* skills */
+.p1-skills-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.p1-skill-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #1f2937;
+  font-size: 13px;
+}
+
+.p1-skill-add {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px dashed #22c55e;
+  background: transparent;
+  color: #22c55e;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+/* generic card */
+.p1-card {
+  border-radius: 16px;
+  border: 1px solid #111827;
+  background: radial-gradient(circle at top left, #020617, #020617 45%, #020617);
+  padding: 12px 14px;
+}
+
+/* textarea */
+.p1-textarea {
+  width: 100%;
+  min-height: 110px;
+  background: transparent;
+  border: none;
+  resize: vertical;
+  outline: none;
+  color: #e5e7eb;
+  font-size: 14px;
+}
+
+/* upload */
+.p1-upload-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 16px;
+  border: 1px dashed #22c55e;
+  padding: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  cursor: pointer;
+}
+
+.p1-upload-card.p1-upload-has-file {
+  border-style: solid;
+  border-color: #22c55e;
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.p1-upload-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  border: 1px solid #22c55e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.p1-upload-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+}
+
+.p1-upload-main {
+  color: #e5e7eb;
+}
+
+.p1-upload-link {
+  color: #22c55e;
+}
+
+.p1-upload-file-name {
+  font-weight: 500;
+  color: #22c55e;
+}
+
+.p1-upload-selected-label {
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+.p1-upload-sub {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+/* footer buttons */
+.p1-footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-start;
+  gap: 10px;
+}
+
+.p1-btn-primary,
+.p1-btn-secondary {
+  border-radius: 999px;
+  border: none;
+  padding: 8px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease,
+    transform 0.08s ease;
+}
+
+.p1-btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #011109;
+  box-shadow: 0 10px 30px rgba(34, 197, 94, 0.4);
+}
+
+.p1-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 40px rgba(34, 197, 94, 0.55);
+}
+
+.p1-btn-secondary {
+  background: #111827;
+  color: #e5e7eb;
+}
+
+.p1-btn-secondary:hover {
+  background: #020617;
+}
+
+/* ===== Right side ===== */
+.p1-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.p1-dashboard {
+  margin-bottom: 4px;
+}
+
+/* donut chart */
+.p1-donut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.p1-donut {
+  width: 150px;
+  height: 150px;
+  border-radius: 999px;
+  background: conic-gradient(#22c55e 0 270deg, #0f172a 270deg 360deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* inner circle */
+.p1-donut-inner {
+  width: 104px;
+  height: 104px;
+  border-radius: 999px;
+  background: #020617;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.p1-donut-percent {
+  font-size: 24px;
+  font-weight: 650;
+}
+
+.p1-donut-caption {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* legend */
+.p1-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #9ca3af;
+}
+
+.p1-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p1-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+}
+
+.p1-legend-dot-match {
+  background: #22c55e;
+}
+
+.p1-legend-dot-gap {
+  background: #0f172a;
+}
+
+/* stats */
+.p1-stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.p1-stat-card {
+  border-radius: 12px;
+  background: #020617;
+  border: 1px solid #111827;
+  padding: 8px 10px;
+}
+
+.p1-stat-number {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.p1-stat-label {
+  font-size: 11px;
+  color: #9ca3af;
+}
+
+/* phase progress */
+.p1-progress-card {
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.p1-phase-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.p1-phase-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9ca3af;
+}
+
+.p1-phase-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #1f2937;
+}
+
+.p1-phase-active {
+  color: #f9fafb;
+  font-weight: 500;
+}
+
+.p1-phase-active .p1-phase-dot {
+  background: #22c55e;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 960px) {
+  .p1-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .p1-right {
+    order: -1;
+  }
+
+  .p1-header {
+    padding-inline: 16px;
+  }
+
+  .p1-main {
+    padding-inline: 16px;
+  }
+}
+
+/* ===== EXTRA FOR NEW MATCH LOGIC ===== */
+
+/* smooth donut animation */
+.p1-donut {
+  transition: background 0.7s ease-out;
+}
+
+/* verdict text */
+.p1-verdict-label {
+  font-size: 12px;
+  color: #9ca3af;
+  margin-top: 6px;
+  text-align: center;
+}
+
+/* ensure upload area always clickable */
+.p1-upload-card {
+  cursor: pointer;
+}
+/* ---- Skills dynamic ---- */
+.p1-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.p1-skill-close {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+.p1-add-skill-input {
+  background: transparent;
+  border: 1px dashed #22c55e;
+  border-radius: 999px;
+  padding: 6px 12px;
+  outline: none;
+  font-size: 0.85rem;
+}
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid #22c55e;  /* green line */
+  background: rgba(30, 41, 59, 0.6); /* dark bluish blend */
+  color: #e2e8f0; /* light gray text */
+  font-size: 0.85rem;
+}
+
+/* white close icon */
+.skill-chip-close {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: white;         /* <-- white close */
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+}
+.skill-chip:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #4ade80; /* lighter green on hover */
+}
+
+.skill-chip-close:hover {
+  color: #4ade80; /* green when hover close icon */
+}
