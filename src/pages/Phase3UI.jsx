@@ -132,6 +132,28 @@ print(reverse_string(text))`,
   },
 ];
 
+// 🔹 helper to normalize and compute scores from answers
+const normalize = (str = "") => str.replace(/\r\n/g, "\n").trim();
+
+function computeScores(mcqAnswers, codeAnswers) {
+  let mcqScore = 0;
+  mcqQuestions.forEach((q, idx) => {
+    if (mcqAnswers[idx] === q.correctIndex) mcqScore += 1;
+  });
+
+  let codingScore = 0;
+  codingQuestions.forEach((q) => {
+    const userCode = codeAnswers[q.id] || "";
+    const expectedCode = q.output || "";
+    if (normalize(userCode) === normalize(expectedCode)) {
+      codingScore += 1;
+    }
+  });
+
+  const totalScore = mcqScore + codingScore; // out of 10
+  return { mcqScore, codingScore, totalScore };
+}
+
 export default function Phase3UI() {
   const navigate = useNavigate();
 
@@ -182,29 +204,28 @@ export default function Phase3UI() {
   };
 
   const handleSubmit = () => {
+    if (submitted) return;
     setSubmitted(true);
+
+    // 🔹 compute scores at submit time and store for Phase 5
+    const { mcqScore, codingScore, totalScore } = computeScores(
+      mcqAnswers,
+      codeAnswers
+    );
+    const percent = (totalScore / 10) * 100;
+
+    localStorage.setItem("phase3_mcq", mcqScore.toString());
+    localStorage.setItem("phase3_coding", codingScore.toString());
+    localStorage.setItem("phase3_total", totalScore.toString());
+    localStorage.setItem("phase3_outOf", "10");
+    localStorage.setItem("phase3_percent", Math.round(percent).toString());
   };
 
-  // simple MCQ score
-  let mcqScore = 0;
-  mcqQuestions.forEach((q, idx) => {
-    if (mcqAnswers[idx] === q.correctIndex) mcqScore += 1;
-  });
-
-  // Coding score: exact match with expected solution
-  const normalize = (str = "") =>
-    str.replace(/\r\n/g, "\n").trim(); // ignore extra blank lines at start/end
-
-  let codingScore = 0;
-  codingQuestions.forEach((q) => {
-    const userCode = codeAnswers[q.id] || "";
-    const expectedCode = q.output || "";
-    if (normalize(userCode) === normalize(expectedCode)) {
-      codingScore += 1;
-    }
-  });
-
-  const totalScore = mcqScore + codingScore; // out of 10
+  // 🔹 use the same helper for displaying current scores
+  const { mcqScore, codingScore, totalScore } = computeScores(
+    mcqAnswers,
+    codeAnswers
+  );
   const canProceed = totalScore >= 8; // 80%
 
   return (

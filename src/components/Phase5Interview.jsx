@@ -1,46 +1,115 @@
-// Phase5Interview.jsx
-import React from "react";
+// src/components/Phase5Interview.jsx
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Phase5Interview.css";
 
 export default function Phase5Interview() {
   const navigate = useNavigate();
 
-  // Demo scores – later you can replace with real data from backend / context
-  const scores = {
-    overall: 82,
-    resumeMatch: 75,
-    aptitude: 7, // /10
-    codingMcq: 4, // /5
-    codingCode: 3, // /5
-    hrVideo: 3.5, // /5
+  // ---- Read scores from localStorage (with safe defaults) ----
+  const phase1Score = Number(localStorage.getItem("phase1_score") || 0);
+  const phase1OutOf = Number(localStorage.getItem("phase1_outOf") || 10);
+  const phase1MatchPercent = Number(
+    localStorage.getItem("phase1_matchPercent") || 0
+  );
+
+  const phase2Score = Number(localStorage.getItem("phase2_score") || 0);
+  const phase2OutOf = Number(localStorage.getItem("phase2_outOf") || 10);
+  const phase2Percent = Number(localStorage.getItem("phase2_percent") || 0);
+
+  const phase3Mcq = Number(localStorage.getItem("phase3_mcq") || 0);
+  const phase3Coding = Number(localStorage.getItem("phase3_coding") || 0);
+  const phase3Total = Number(localStorage.getItem("phase3_total") || 0);
+  const phase3OutOf = Number(localStorage.getItem("phase3_outOf") || 10);
+  const phase3Percent = Number(localStorage.getItem("phase3_percent") || 0);
+
+  const phase4Score = Number(localStorage.getItem("phase4_score") || 0);
+  const phase4OutOf = Number(localStorage.getItem("phase4_outOf") || 20);
+  const phase4Percent = Number(localStorage.getItem("phase4_percent") || 0);
+
+  const candidateName =
+    localStorage.getItem("candidate_name") || "Candidate";
+
+  // ---- Overall calculation ----
+  const {
+    overallPercent,
+    overallVerdict,
+    overallLine,
+    overallTagColor,
+  } = useMemo(() => {
+    const totalEarned =
+      phase1Score + phase2Score + phase3Total + phase4Score;
+    const totalMax =
+      phase1OutOf + phase2OutOf + phase3OutOf + phase4OutOf;
+
+    const pct = totalMax ? Math.round((totalEarned / totalMax) * 100) : 0;
+
+    let verdict = "Needs Improvement";
+    let line = "Not recommended at this stage.";
+    let color = "#f97316"; // orange by default
+
+    if (pct >= 85) {
+      verdict = "Strongly Recommended";
+      line = "Excellent performance across all rounds.";
+      color = "#22c55e";
+    } else if (pct >= 70) {
+      verdict = "Recommended";
+      line = "Good performance with some areas to improve.";
+      color = "#38bdf8";
+    } else if (pct >= 60) {
+      verdict = "Borderline";
+      line = "Average performance, suitable for training roles.";
+      color = "#eab308";
+    }
+
+    return {
+      overallPercent: pct,
+      overallVerdict: verdict,
+      overallLine: line,
+      overallTagColor: color,
+    };
+  }, [
+    phase1Score,
+    phase1OutOf,
+    phase2Score,
+    phase2OutOf,
+    phase3Total,
+    phase3OutOf,
+    phase4Score,
+    phase4OutOf,
+  ]);
+
+  // ---- Phase-wise feedback helpers ----
+  const getPhase1Feedback = () => {
+    if (phase1MatchPercent >= 80)
+      return "Strong alignment between resume and job description.";
+    if (phase1MatchPercent >= 60)
+      return "Good match, with some skill gaps.";
+    return "Resume needs better alignment with the role.";
   };
 
-  const strengths = [
-    "Good match with job skills (Python / ML).",
-    "Solid problem-solving in aptitude & coding.",
-    "Explains projects clearly.",
-  ];
+  const getPhase2Feedback = () => {
+    if (phase2Percent >= 80) return "Strong aptitude and reasoning skills.";
+    if (phase2Percent >= 60)
+      return "Decent aptitude, but more practice can help.";
+    return "Needs more work on quantitative and logical reasoning.";
+  };
 
-  const improvements = [
-    "Shorten HR answers and be more direct.",
-    "Practice more aptitude word problems.",
-    "Work on optimising code and edge cases.",
-  ];
+  const getPhase3Feedback = () => {
+    if (phase3Percent >= 80)
+      return "Good coding fundamentals and problem solving.";
+    if (phase3Percent >= 60)
+      return "Basic coding is fine, but improve accuracy and logic.";
+    return "Coding and DSA fundamentals need improvement.";
+  };
 
-  const overallVerdict =
-    scores.overall >= 80
-      ? "Strongly Recommended"
-      : scores.overall >= 65
-      ? "Recommended with Improvements"
-      : "Not Recommended (for now)";
-
-  const verdictTag =
-    scores.overall >= 80
-      ? "success"
-      : scores.overall >= 65
-      ? "warning"
-      : "danger";
+  const getPhase4Feedback = () => {
+    if (phase4Percent >= 80)
+      return "Confident communication and clear answers.";
+    if (phase4Percent >= 60)
+      return "Communication is okay, work on structure and clarity.";
+    return "HR answers were short or unclear; practice more mock interviews.";
+  };
 
   const handleCheatNav = (phase) => {
     const map = {
@@ -50,13 +119,18 @@ export default function Phase5Interview() {
       4: "/phase4",
       5: "/phase5",
     };
-    const path = map[phase];
-    if (path) navigate(path);
+    if (map[phase]) navigate(map[phase]);
+  };
+
+  const handleRestart = () => {
+    // if you want to clear scores here, you can:
+    // localStorage.clear();
+    navigate("/phase1");
   };
 
   return (
     <div className="p5-page">
-      {/* ===== Top Header with cheat buttons ===== */}
+      {/* HEADER */}
       <header className="p5-header">
         <div className="p5-cheat-wrapper">
           {[1, 2, 3, 4, 5].map((n) => (
@@ -70,141 +144,164 @@ export default function Phase5Interview() {
           ))}
         </div>
 
-        <div className="p5-title">Final Evaluation Dashboard</div>
+        <div className="p5-phase-pill">Phase 5 – Final Result Dashboard</div>
 
-        <div className="p5-phase-pill">Phase 5 – Results</div>
+        <div className="p5-actions">
+          <button className="p5-secondary-btn" onClick={handleRestart}>
+            Restart Flow
+          </button>
+        </div>
       </header>
 
-      {/* ===== Main Content ===== */}
+      {/* MAIN CONTENT */}
       <main className="p5-main">
-        {/* Overall score card */}
-        <section className="p5-overall-card">
-          <div className="p5-overall-left">
-            <h2 className="p5-overall-heading">Overall Match Score</h2>
-            <p className="p5-overall-sub">
-              Combined performance across Resume, Aptitude, Coding and HR
-              rounds.
-            </p>
-
-            <div className="p5-overall-meta">
-              <span className={`p5-verdict-tag p5-verdict-${verdictTag}`}>
-                {overallVerdict}
-              </span>
-              <span className="p5-small-label">
-                Candidate: Demo User (can be dynamic later)
-              </span>
-            </div>
-          </div>
-
-          <div className="p5-overall-right">
-            <div className="p5-circle">
-              <div className="p5-circle-inner">
-                <span className="p5-circle-score">{scores.overall}%</span>
-                <span className="p5-circle-caption">Overall Score</span>
+        {/* LEFT: Overall card */}
+        <section className="p5-left">
+          <div className="p5-card p5-overall-card">
+            <div className="p5-overall-header">
+              <div>
+                <h1 className="p5-title">Overall Match Score</h1>
+                <p className="p5-subtitle">
+                  Combined performance across Resume, Aptitude, Coding
+                  and HR rounds.
+                </p>
               </div>
+              <div className="p5-candidate-name">
+                Candidate: <span>{candidateName}</span>
+              </div>
+            </div>
+
+            <div className="p5-overall-body">
+              <div className="p5-donut-wrap">
+                <div
+                  className="p5-donut"
+                  style={{
+                    background: `conic-gradient(${overallTagColor} ${
+                      overallPercent * 3.6
+                    }deg, #020617 0deg)`,
+                  }}
+                >
+                  <div className="p5-donut-inner">
+                    <span className="p5-donut-percent">
+                      {overallPercent}%
+                    </span>
+                    <span className="p5-donut-caption">Overall Score</span>
+                  </div>
+                </div>
+
+                <div className="p5-overall-verdict">
+                  <span
+                    className="p5-overall-pill"
+                    style={{ color: overallTagColor }}
+                  >
+                    {overallVerdict}
+                  </span>
+                  <p className="p5-overall-line">{overallLine}</p>
+                </div>
+              </div>
+
+              <div className="p5-overall-stats">
+                <div className="p5-stat-card">
+                  <div className="p5-stat-label">Phase 1 – Resume</div>
+                  <div className="p5-stat-value">
+                    {phase1Score} / {phase1OutOf}
+                  </div>
+                </div>
+                <div className="p5-stat-card">
+                  <div className="p5-stat-label">Phase 2 – Aptitude</div>
+                  <div className="p5-stat-value">
+                    {phase2Score} / {phase2OutOf}
+                  </div>
+                </div>
+                <div className="p5-stat-card">
+                  <div className="p5-stat-label">Phase 3 – Coding</div>
+                  <div className="p5-stat-value">
+                    {phase3Total} / {phase3OutOf}
+                  </div>
+                </div>
+                <div className="p5-stat-card">
+                  <div className="p5-stat-label">Phase 4 – HR</div>
+                  <div className="p5-stat-value">
+                    {phase4Score} / {phase4OutOf}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p5-overall-footer">
+              <p>
+                Note: This is an internal evaluation dashboard combining
+                technical and behavioral performance. Use it to support
+                final hiring decisions, not as the only factor.
+              </p>
             </div>
           </div>
         </section>
 
-        {/* Round-wise cards */}
-        <section className="p5-rounds-grid">
-          <div className="p5-round-card">
-            <h3>Phase 1 – Resume</h3>
-            <p className="p5-round-score">{scores.resumeMatch}% match</p>
-            <p className="p5-round-note">
-              Skills and projects mostly align with JD.
-            </p>
-          </div>
-
-          <div className="p5-round-card">
-            <h3>Phase 2 – Aptitude</h3>
-            <p className="p5-round-score">{scores.aptitude} / 10</p>
-            <p className="p5-round-note">
-              Good quantitative skills, minor mistakes in word problems.
-            </p>
-          </div>
-
-          <div className="p5-round-card">
-            <h3>Phase 3 – Coding</h3>
-            <p className="p5-round-score">
-              {scores.codingMcq} / 5 MCQ, {scores.codingCode} / 5 coding
-            </p>
-            <p className="p5-round-note">
-              Understands DSA basics; scope to improve optimisation and edge
-              cases.
-            </p>
-          </div>
-
-          <div className="p5-round-card">
-            <h3>Phase 4 – HR Video</h3>
-            <p className="p5-round-score">{scores.hrVideo} / 5</p>
-            <p className="p5-round-note">
-              Confident and calm, answers slightly lengthy at times.
-            </p>
-          </div>
-        </section>
-
-        {/* Bottom grid: strengths + decision */}
-        <section className="p5-bottom-grid">
-          <div className="p5-strengths-card">
-            <div className="p5-two-cols">
-              <div>
-                <h3 className="p5-sub-heading">Strengths</h3>
-                <ul className="p5-list">
-                  {strengths.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="p5-sub-heading">Areas to Improve</h3>
-                <ul className="p5-list">
-                  {improvements.map((item, idx) => (
-                    <li key={idx}>{item}</li>
-                  ))}
-                </ul>
-              </div>
+        {/* RIGHT: Phase-wise breakdown */}
+        <section className="p5-right">
+          {/* Phase 1 */}
+          <div className="p5-card p5-phase-card">
+            <div className="p5-phase-header">
+              <span className="p5-phase-chip">Phase 1</span>
+              <span className="p5-phase-title">Resume Screening</span>
+              <span className="p5-phase-score">
+                {phase1Score} / {phase1OutOf}
+              </span>
             </div>
+            <p className="p5-phase-percent">
+              Match Score: {phase1MatchPercent}%
+            </p>
+            <p className="p5-phase-feedback">{getPhase1Feedback()}</p>
           </div>
 
-          <aside className="p5-decision-card">
-            <h3 className="p5-sub-heading">Final Decision</h3>
-            <p className="p5-decision-main">{overallVerdict}</p>
-            <p className="p5-decision-role">
-              Suggested Role: <strong>Junior Python / AIML Developer</strong>
+          {/* Phase 2 */}
+          <div className="p5-card p5-phase-card">
+            <div className="p5-phase-header">
+              <span className="p5-phase-chip">Phase 2</span>
+              <span className="p5-phase-title">Aptitude Round</span>
+              <span className="p5-phase-score">
+                {phase2Score} / {phase2OutOf}
+              </span>
+            </div>
+            <p className="p5-phase-percent">
+              Accuracy: {phase2Percent}%
             </p>
-            <p className="p5-decision-note">
-              This decision is based on the combined performance across all
-              phases. Recruiter can override this after manual review.
+            <p className="p5-phase-feedback">{getPhase2Feedback()}</p>
+          </div>
+
+          {/* Phase 3 */}
+          <div className="p5-card p5-phase-card">
+            <div className="p5-phase-header">
+              <span className="p5-phase-chip">Phase 3</span>
+              <span className="p5-phase-title">Coding Round</span>
+              <span className="p5-phase-score">
+                {phase3Total} / {phase3OutOf}
+              </span>
+            </div>
+            <p className="p5-phase-percent">
+              MCQ: {phase3Mcq}/5 · Coding: {phase3Coding}/5 (
+              {phase3Percent}%)
             </p>
-            <button
-              className="p5-primary-btn"
-              type="button"
-              onClick={() => alert("Download report (demo only).")}
-            >
-              Download Report (Demo)
-            </button>
-          </aside>
+            <p className="p5-phase-feedback">{getPhase3Feedback()}</p>
+          </div>
+
+          {/* Phase 4 */}
+          <div className="p5-card p5-phase-card">
+            <div className="p5-phase-header">
+              <span className="p5-phase-chip">Phase 4</span>
+              <span className="p5-phase-title">HR / Virtual Interview</span>
+              <span className="p5-phase-score">
+                {phase4Score} / {phase4OutOf}
+              </span>
+            </div>
+            <p className="p5-phase-percent">
+              Interview Score: {phase4Percent}%
+            </p>
+            <p className="p5-phase-feedback">{getPhase4Feedback()}</p>
+          </div>
         </section>
       </main>
-
-      {/* Footer navigation */}
-      <footer className="p5-footer">
-        <button
-          className="p5-secondary-btn"
-          type="button"
-          onClick={() => navigate("/phase4")}
-        >
-          ← Back to HR Round
-        </button>
-        <button
-          className="p5-primary-btn"
-          type="button"
-          onClick={() => alert("Session finished (demo).")}
-        >
-          Finish Session
-        </button>
-      </footer>
     </div>
   );
 }

@@ -116,6 +116,12 @@ export default function AptitudeTest() {
     console.log("Submitted answers:", answers);
     console.log("Calculated score:", s);
 
+    // 🔹 NEW: save aptitude score for Phase 5 dashboard
+    const percent = (s / questions.length) * 100;
+    localStorage.setItem("phase2_score", s.toString());                 // e.g. 7
+    localStorage.setItem("phase2_outOf", questions.length.toString());  // "10"
+    localStorage.setItem("phase2_percent", Math.round(percent).toString()); // "70"
+
     setScore(s);
     setSubmitted(true);
   };

@@ -110,13 +110,27 @@ export default function Phase4HR() {
   // ---------------- MOVE TO NEXT QUESTION + UPDATE SCORE ----------------
   // marksForThisQuestion: 0, 2, or 4
   const handleNextQuestion = (marksForThisQuestion) => {
-    if (marksForThisQuestion > 0) {
-      setInterviewScore(prev => prev + marksForThisQuestion);
-    }
+    const isLast = currentQuestionIndex === QUESTIONS.length - 1;
+
+    // update score and, if last, store in localStorage for Phase 5
+    setInterviewScore(prev => {
+      const updated = prev + marksForThisQuestion;
+
+      if (isLast) {
+        const outOf = QUESTIONS.length * 4; // 20
+        const percent = outOf ? Math.round((updated / outOf) * 100) : 0;
+
+        localStorage.setItem("phase4_score", updated.toString());
+        localStorage.setItem("phase4_outOf", outOf.toString());
+        localStorage.setItem("phase4_percent", percent.toString());
+      }
+
+      return updated;
+    });
 
     setIsRecording(false);
 
-    if (currentQuestionIndex < QUESTIONS.length - 1) {
+    if (!isLast) {
       setCurrentQuestionIndex(i => i + 1);
     } else {
       setMessages(prev => [
@@ -152,8 +166,7 @@ export default function Phase4HR() {
       ...prev,
       {
         from: "system",
-        text:
-          `Response captured (${elapsed}s). Marks awarded for this question: ${marks}.`
+        text: `Response captured (${elapsed}s). Marks awarded for this question: ${marks}.`
       }
     ]);
 
@@ -288,7 +301,6 @@ export default function Phase4HR() {
               {interviewScore} / {maxScore}
             </span>
           </div>
-
 
           <div className="phase4-chat-window">
             {messages.map((m, idx) => (

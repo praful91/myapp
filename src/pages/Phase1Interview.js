@@ -117,6 +117,25 @@ export default function Phase1Interview() {
     if (path) navigate(path);
   };
 
+  // 🔹 NEW: convert matchScore (0–100) to phase-1 score out of 10
+  const computePhase1Score = () => {
+    // simple conversion: 75% -> 8/10
+    return Math.round(matchScore / 10);
+  };
+
+  // 🔹 NEW: when going to aptitude, save Phase-1 score for Phase-5 dashboard
+  const handleNextPhase = () => {
+    const phase1Score = computePhase1Score();
+
+    localStorage.setItem("phase1_score", phase1Score.toString()); // e.g. 8
+    localStorage.setItem("phase1_outOf", "10");                    // out of 10
+    localStorage.setItem("phase1_matchPercent", matchScore.toString()); // raw %
+
+    // if later you add candidate name/email fields, you can store them here too
+
+    navigate("/aptitude");
+  };
+
   return (
     <div className="p1-page">
       <DevNav />
@@ -237,7 +256,11 @@ export default function Phase1Interview() {
             <button className="p1-btn-secondary" type="button" onClick={() => navigate(-1)}>
               Back
             </button>
-            <button className="p1-btn-primary" type="button" onClick={() => navigate("/aptitude")}>
+            <button
+              className="p1-btn-primary"
+              type="button"
+              onClick={handleNextPhase}   // 🔹 changed from navigate("/aptitude")
+            >
               Next: Aptitude Round →
             </button>
           </div>
