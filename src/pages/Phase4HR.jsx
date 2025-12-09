@@ -3,283 +3,324 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Phase4HR.css";
 
-const hrQuestions = [
+const QUESTION_TIME = 60; // seconds
+
+const QUESTIONS = [
   "Tell me about yourself in 60 seconds.",
-  "Why do you want to join this company?",
-  "Describe a challenging situation and how you handled it.",
-  "What are your strengths and areas you want to improve?",
-  "Where do you see yourself in the next 3 years?",
+  "Why should we hire you for this role?",
+  "What are your strengths and weaknesses?",
+  "Describe a challenging problem you solved recently.",
+  "Where do you see yourself in the next 3 years?"
 ];
 
 export default function Phase4HR() {
   const navigate = useNavigate();
-
   const videoRef = useRef(null);
-  const canvasRef = useRef(null);
 
-  const [stream, setStream] = useState(null);
-  const [recording, setRecording] = useState(false);
-  const [permissionError, setPermissionError] = useState("");
-  const [permissionsGranted, setPermissionsGranted] = useState(false);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [timer, setTimer] = useState(QUESTION_TIME);
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [interviewScore, setInterviewScore] = useState(0); // score out of 20
+  const [messages, setMessages] = useState([
+    {
+      from: "bot",
+      text:
+        "Welcome to the AI-powered virtual interview. Answer verbally when a question appears."
+    }
+  ]);
 
-  const [currentQIndex, setCurrentQIndex] = useState(0);
-  const [notes, setNotes] = useState("");
-  const [submitted, setSubmitted] = useState(false);
+  const maxScore = QUESTIONS.length * 4; // 5 questions * 4 marks
 
-  // ===== BUTTON CLICK TO REQUEST CAMERA + MIC =====
-  const requestPermissions = async () => {
-    setPermissionError("");
-
-    try {
-      const s = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
-        audio: true,
-      });
-
-      setStream(s);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = s;
-        await videoRef.current.play();
+  // ---------------- CAMERA LIVE (preview only) ----------------
+  useEffect(() => {
+    async function setupCamera() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } catch (err) {
+        console.error("Could not access camera/mic", err);
       }
+    }
+    setupCamera();
+  }, []);
 
-      setPermissionsGranted(true);
-    } catch (err) {
-      console.error("Media error:", err);
-      setPermissionError(
-        "Camera / Microphone permission denied or not available. Please allow access."
-      );
+  // ---------------- QUESTION CHANGE + TTS + TIMER RESET ----------------
+  useEffect(() => {
+    const q = QUESTIONS[currentQuestionIndex];
+
+    // show question in chat
+    setMessages(prev => [
+      ...prev,
+      {
+        from: "bot",
+        text: `Question ${currentQuestionIndex + 1} of ${QUESTIONS.length}`
+      },
+      { from: "bot", text: q }
+    ]);
+
+    // reset timer & start "recording"
+    setTimer(QUESTION_TIME);
+    setIsRecording(true);
+
+    // text-to-speech
+    if (
+      voiceEnabled &&
+      typeof window !== "undefined" &&
+      "speechSynthesis" in window
+    ) {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(q);
+      utter.rate = 1;
+      utter.pitch = 1;
+      window.speechSynthesis.speak(utter);
+    }
+  }, [currentQuestionIndex, voiceEnabled]);
+
+  // ---------------- TIMER COUNTDOWN ----------------
+  useEffect(() => {
+    if (!isRecording) return;
+
+    if (timer <= 0) {
+      // ⏰ time over, user didn’t stop -> 0 marks
+      setMessages(prev => [
+        ...prev,
+        {
+          from: "system",
+          text:
+            "Time’s up, no response detected for this question. 0 marks awarded."
+        }
+      ]);
+      handleNextQuestion(0); // zero marks
+      return;
+    }
+
+    const id = setTimeout(() => {
+      setTimer(t => t - 1);
+    }, 1000);
+
+    return () => clearTimeout(id);
+  }, [isRecording, timer]);
+
+  // ---------------- MOVE TO NEXT QUESTION + UPDATE SCORE ----------------
+  // marksForThisQuestion: 0, 2, or 4
+  const handleNextQuestion = (marksForThisQuestion) => {
+    if (marksForThisQuestion > 0) {
+      setInterviewScore(prev => prev + marksForThisQuestion);
+    }
+
+    setIsRecording(false);
+
+    if (currentQuestionIndex < QUESTIONS.length - 1) {
+      setCurrentQuestionIndex(i => i + 1);
+    } else {
+      setMessages(prev => [
+        ...prev,
+        {
+          from: "system",
+          text:
+            "Interview completed. Final interview score calculated. You can proceed to the result phase."
+        }
+      ]);
     }
   };
 
-  // ===== do nothing on mount (only cleanup) =====
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((t) => t.stop());
+  // ---------------- MANUAL STOP (candidate ends answer) ----------------
+  const manualStop = () => {
+    if (!isRecording) return;
+
+    setIsRecording(false);
+
+    // calculate how long they "spoke"
+    const elapsed = QUESTION_TIME - timer; // seconds used
+    let marks = 0;
+
+    if (elapsed >= 20 && elapsed <= 30) {
+      marks = 2;
+    } else if (elapsed > 30) {
+      marks = 4;
+    } else {
+      marks = 0; // < 20s = too short
+    }
+
+    setMessages(prev => [
+      ...prev,
+      {
+        from: "system",
+        text:
+          `Response captured (${elapsed}s). Marks awarded for this question: ${marks}.`
       }
-    };
-  }, [stream]);
+    ]);
 
-  const handleCheatNav = (phase) => {
-    const map = {
-      1: "/phase1",
-      2: "/aptitude",
-      3: "/phase3",
-      4: "/phase4",
-      5: "/phase5",
-    };
-    const path = map[phase];
-    if (path) navigate(path);
+    setTimeout(() => {
+      handleNextQuestion(marks);
+    }, 600);
   };
 
-  const handleSnapshot = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    console.log("Snapshot captured (demo).");
-  };
+  const progressPercent =
+    ((QUESTION_TIME - timer) / QUESTION_TIME) * 100;
 
-  const toggleRecording = () => {
-    setRecording((prev) => !prev);
-  };
+  const currentQuestion = QUESTIONS[currentQuestionIndex];
 
-  const handleNextQuestion = () => {
-    setCurrentQIndex((idx) =>
-      idx < hrQuestions.length - 1 ? idx + 1 : idx
-    );
-  };
-
-  const handlePrevQuestion = () => {
-    setCurrentQIndex((idx) => (idx > 0 ? idx - 1 : idx));
-  };
-
-  const handleSubmitInterview = () => {
-    setSubmitted(true);
-  };
+  const interviewFinished =
+    currentQuestionIndex === QUESTIONS.length - 1 && !isRecording;
 
   return (
-    <div className="p4-page">
-      {/* ===== Top Cheat Strip ===== */}
-      <header className="p4-header">
-        <div className="p4-cheat-wrapper">
-          {[1, 2, 3, 4, 5].map((n) => (
-            <button
-              key={n}
-              className={`p4-cheat-btn ${n === 4 ? "p4-cheat-active" : ""}`}
-              onClick={() => handleCheatNav(n)}
-            >
-              {n}
-            </button>
-          ))}
-        </div>
-        <div className="p4-phase-pill">Phase 4 – HR Video Interview</div>
-      </header>
+    <div className="phase4-page">
+      <main className="phase4-main">
+        {/* LEFT: Candidate / Camera */}
+        <section className="phase4-left-card">
+          <div className="phase4-card-header">
+            <span className="phase4-card-title">Candidate</span>
+            <span className="phase4-status-dot" />
+            <span className="phase4-status-text">Camera Live</span>
+          </div>
 
-      {/* ===== Main two big boxes ===== */}
-      <main className="p4-main">
-        {/* LEFT: Candidate Camera */}
-        <section className="p4-box p4-candidate-box">
-          <div className="p4-box-header">
-            <div className="p4-box-title-row">
-              <span className="p4-box-title">Candidate</span>
-              <span
-                className={`p4-status-dot ${
-                  recording ? "p4-status-on" : "p4-status-off"
-                }`}
-              />
-              <span className="p4-status-text">
-                {recording ? "Recording…" : "Camera Live"}
+          <div className="phase4-video-wrapper">
+            <video
+              ref={videoRef}
+              autoPlay
+              muted
+              className="phase4-video"
+            />
+          </div>
+
+          <div className="phase4-controls-row">
+            <div className="phase4-controls-info">
+              <span className={isRecording ? "phase4-text-green" : ""}>
+                {isRecording ? "Recording..." : "Not recording"}
               </span>
+              <span className="phase4-dot-separator">•</span>
+              <span>Mic: On</span>
             </div>
-          </div>
 
-          <div className="p4-video-wrapper">
-
-            {/* === Permission button === */}
-            {!permissionsGranted && !permissionError && (
-              <button
-                className="p4-control-btn p4-control-primary"
-                type="button"
-                onClick={requestPermissions}
-              >
-                Enable Camera & Mic
-              </button>
-            )}
-
-            {/* === Error === */}
-            {permissionError && (
-              <div className="p4-permission-error">{permissionError}</div>
-            )}
-
-            {/* === Video Preview === */}
-            {permissionsGranted && !permissionError && (
-              <video
-                ref={videoRef}
-                className="p4-video"
-                autoPlay
-                muted
-              />
-            )}
-          </div>
-
-          {/* success text */}
-          {permissionsGranted && (
-            <p style={{ color: "#4ade80", marginTop: 8 }}>
-              Permission granted – camera live!
-            </p>
-          )}
-
-          <div className="p4-video-controls">
             <button
-              className="p4-control-btn p4-control-secondary"
-              type="button"
-              onClick={handleSnapshot}
-              disabled={!permissionsGranted}
+              className={`phase4-primary-btn ${
+                isRecording ? "phase4-primary-btn-active" : ""
+              }`}
+              onClick={manualStop}
+              disabled={!isRecording}
             >
-              Snapshot
-            </button>
-            <button
-              className="p4-control-btn p4-control-primary"
-              type="button"
-              onClick={toggleRecording}
-              disabled={!permissionsGranted}
-            >
-              {recording ? "Stop Recording" : "Start Recording"}
+              {isRecording ? "Stop Recording" : "Stopped"}
             </button>
           </div>
 
-          <p className="p4-helper-text">
-            Tip: Position yourself clearly and look into the camera. Frames may
-            be captured for anti-cheat (demo).
-          </p>
-
-          <canvas ref={canvasRef} className="p4-hidden-canvas" />
+          <div className="phase4-timer-text">
+            Recording time:{" "}
+            <span>
+              {String(QUESTION_TIME - timer).padStart(2, "0")} /
+              {QUESTION_TIME}s
+            </span>
+          </div>
         </section>
 
-        {/* RIGHT: AI interviewer */}
-        <section className="p4-box p4-ai-box">
-          <div className="p4-box-header">
-            <div className="p4-box-title-row">
-              <span className="p4-box-title">AI Interviewer</span>
-              <span className="p4-robot-pill">Virtual HR Bot 🤖</span>
+        {/* RIGHT: AI Interviewer */}
+        <section className="phase4-right-card">
+          <div className="phase4-card-header phase4-right-header">
+            <div>
+              <span className="phase4-card-title">
+                AI Interviewer
+              </span>
+              <span className="phase4-subtitle">
+                {" "}
+                (Virtual HR Bot)
+              </span>
+            </div>
+            <div className="phase4-bot-status">
+              <span className="phase4-status-dot phase4-status-dot-green" />
+              <span className="phase4-status-text">Online</span>
+
+              <button
+                className="phase4-voice-toggle"
+                onClick={() => setVoiceEnabled(v => !v)}
+              >
+                {voiceEnabled ? "🔊 Voice: On" : "🔇 Voice: Off"}
+              </button>
             </div>
           </div>
 
-          <div className="p4-ai-body">
-            <div className="p4-robot-avatar">🤖</div>
-
-            <div className="p4-question-card">
-              <h3 className="p4-question-label">Current Question</h3>
-              <p className="p4-question-text">
-                {hrQuestions[currentQIndex]}
-              </p>
-            </div>
-
-            <div className="p4-question-nav">
-              <span className="p4-question-count">
-                Question {currentQIndex + 1} / {hrQuestions.length}
-              </span>
-              <div className="p4-question-buttons">
-                <button
-                  className="p4-mini-btn"
-                  onClick={handlePrevQuestion}
-                  disabled={currentQIndex === 0}
-                >
-                  Previous
-                </button>
-                <button
-                  className="p4-mini-btn"
-                  onClick={handleNextQuestion}
-                  disabled={currentQIndex === hrQuestions.length - 1}
-                >
-                  Next
-                </button>
+          <div className="phase4-current-question-header">
+            <div className="phase4-bot-avatar">🤖</div>
+            <div>
+              <div className="phase4-section-label">
+                CURRENT QUESTION
+              </div>
+              <div className="phase4-question-text">
+                {currentQuestion}
               </div>
             </div>
+          </div>
 
-            <div className="p4-notes-card">
-              <h4 className="p4-notes-title">Short Notes (demo)</h4>
-              <textarea
-                className="p4-notes-textarea"
-                placeholder="Interviewer feedback / candidate remarks can go here…"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                disabled={submitted}
-              />
-            </div>
+          <div className="phase4-listening-row">
+            <span className="phase4-text-green">
+              I’m listening...
+            </span>
+            <span className="phase4-listening-sub">
+              {isRecording
+                ? " your time starts now."
+                : " waiting for the next question."}
+            </span>
+          </div>
 
-            {submitted && (
-              <div className="p4-submitted-banner">
-                Interview submitted. Responses will be evaluated by AI / HR.
+          <div className="phase4-progress-bar">
+            <div
+              className="phase4-progress-fill"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+
+          <div className="phase4-qmeta-row">
+            <span>
+              Question {currentQuestionIndex + 1} / {QUESTIONS.length}
+            </span>
+            <span>Remaining: {timer}s</span>
+          </div>
+
+          {/* Interview score display */}
+          <div className="phase4-score-row">
+            Interview Score:{" "}
+            <span className="phase4-text-green">
+              {interviewScore} / {maxScore}
+            </span>
+          </div>
+
+
+          <div className="phase4-chat-window">
+            {messages.map((m, idx) => (
+              <div
+                key={idx}
+                className={`phase4-chat-bubble phase4-chat-${m.from}`}
+              >
+                {m.text}
               </div>
+            ))}
+          </div>
+
+          <div className="phase4-footer-note">
+            The system auto-moves to the next question when time is
+            over or you stop recording. After the last question, you
+            can go to Phase 5 to see all results.
+          </div>
+
+          {/* Phase navigation */}
+          <div className="phase4-nav-buttons">
+            <button onClick={() => navigate("/phase3")}>
+              ← Previous (Phase 3)
+            </button>
+
+            {interviewFinished && (
+              <button onClick={() => navigate("/phase5")}>
+                Next (Phase 5) →
+              </button>
             )}
           </div>
         </section>
       </main>
-
-      {/* ===== Footer ===== */}
-      <footer className="p4-footer">
-        <button
-          className="p4-btn-secondary"
-          type="button"
-          onClick={() => navigate("/phase3")}
-        >
-          ← Back to Coding Round
-        </button>
-        <button
-          className="p4-btn-primary"
-          type="button"
-          onClick={handleSubmitInterview}
-          disabled={submitted}
-        >
-          {submitted ? "Interview Submitted" : "Submit Interview"}
-        </button>
-      </footer>
     </div>
   );
 }

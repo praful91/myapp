@@ -11,7 +11,7 @@ app.use(express.json());
 const dbPath = path.join(__dirname, "talentmate.db");
 const db = new sqlite3.Database(dbPath);
 
-// CREATE TABLE IF NOT EXISTS
+// CREATE TABLE IF NOT EXISTS: candidates (existing)
 db.run(
   `CREATE TABLE IF NOT EXISTS candidates (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,7 +22,47 @@ db.run(
   )`
 );
 
-// API: SAVE CANDIDATE
+// CREATE TABLE IF NOT EXISTS: resumes (NEW)
+db.run(
+  `CREATE TABLE IF NOT EXISTS resumes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    resume_file TEXT,
+    match_score INTEGER,
+    verdict TEXT,
+    skills TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`
+);
+
+// ---------- SAVE RESUME (Phase-1 AUTO) ----------
+app.post("/api/save-resume", (req, res) => {
+  const { resumeFileName, matchScore, matchVerdict, skills } = req.body;
+
+  const sql = `INSERT INTO resumes (resume_file, match_score, verdict, skills)
+               VALUES (?, ?, ?, ?)`;
+
+  db.run(
+    sql,
+    [
+      resumeFileName || "unknown_file",
+      matchScore || 0,
+      matchVerdict || "unknown",
+      JSON.stringify(skills || []),
+    ],
+    function (err) {
+      if (err) {
+        console.error("DB insert error:", err);
+        return res.status(500).json({ message: "Failed to save resume" });
+      }
+      return res.json({
+        message: "Resume saved!",
+        id: this.lastID,
+      });
+    }
+  );
+});
+
+// Existing: SAVE CANDIDATE
 app.post("/api/candidates", (req, res) => {
   const { name, skills, matchScore } = req.body;
 
@@ -44,15 +84,19 @@ app.post("/api/candidates", (req, res) => {
   });
 });
 
-// API: GET CANDIDATES LIST
+// Existing: GET CANDIDATES LIST
 app.get("/api/candidates", (req, res) => {
-  db.all("SELECT * FROM candidates ORDER BY created_at DESC", [], (err, rows) => {
-    if (err) {
-      console.error("DB read error:", err);
-      return res.status(500).json({ error: "DB read failed" });
+  db.all(
+    "SELECT * FROM candidates ORDER BY created_at DESC",
+    [],
+    (err, rows) => {
+      if (err) {
+        console.error("DB read error:", err);
+        return res.status(500).json({ error: "DB read failed" });
+      }
+      res.json(rows);
     }
-    res.json(rows);
-  });
+  );
 });
 
 const PORT = 5000;

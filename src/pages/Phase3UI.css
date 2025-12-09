@@ -250,3 +250,31 @@
     padding-inline: 16px;
   }
 }
+/* disable state for submit / next button */
+.p3-submit-btn:disabled {
+  background: #111827;
+  color: #6b7280;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* warning text under button when cutoff not met */
+.p3-warning {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #facc15;
+}
+/* disabled state for submit / next button */
+.p3-submit-btn:disabled {
+  background: #111827;
+  color: #6b7280;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* warning text when cutoff not met */
+.p3-warning {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #facc15;
+}

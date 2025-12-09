@@ -1,10 +1,7 @@
-
 // src/pages/AptitudeTest.js
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./AptitudeTest.css";
-// optional global nav – uncomment if you use it
-// import DevNav from "../components/DevNav";
 
 const TOTAL_TIME = 600; // 10 minutes in seconds
 
@@ -37,7 +34,7 @@ const questions = [
     id: 5,
     text: "If x = 10, what is the value of 2x² − 5x + 3?",
     options: ["123", "153", "183", "203"],
-    correctIndex: 2,
+    correctIndex: 1, // ✅ 153 is correct
   },
   {
     id: 6,
@@ -49,7 +46,7 @@ const questions = [
     id: 7,
     text: "Find the odd one out: 18, 24, 32, 40",
     options: ["18", "24", "32", "40"],
-    correctIndex: 2, // 32 not divisible by 6
+    correctIndex: 2,
   },
   {
     id: 8,
@@ -67,7 +64,7 @@ const questions = [
     id: 10,
     text: "If 5 workers finish a task in 12 days, in how many days will 10 workers finish it (same speed)?",
     options: ["3 days", "4 days", "6 days", "8 days"],
-    correctIndex: 2,
+    correctIndex: 1, // ✅ correct is 6 days → index 1 if you want 4 days, change back
   },
 ];
 
@@ -75,58 +72,37 @@ export default function AptitudeTest() {
   const navigate = useNavigate();
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState({}); // {questionIndex: optionIndex}
+  const [answers, setAnswers] = useState({});
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(null);
 
-  // Timer effect
   useEffect(() => {
     if (submitted) return;
-
     if (timeLeft <= 0) {
       handleSubmit();
       return;
     }
-
-    const id = setInterval(() => {
-      setTimeLeft((t) => t - 1);
-    }, 1000);
-
+    const id = setInterval(() => setTimeLeft((t) => t - 1), 1000);
     return () => clearInterval(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft, submitted]);
 
   const handleCheatNav = (phase) => {
-    const map = {
-      1: "/phase1",
-      2: "/aptitude",
-      3: "/phase3",
-      4: "/phase4",
-      5: "/phase5",
-    };
-    const path = map[phase];
-    if (path) navigate(path);
+    const map = { 1: "/phase1", 2: "/aptitude", 3: "/phase3", 4: "/phase4", 5: "/phase5" };
+    if (map[phase]) navigate(map[phase]);
   };
 
   const handleOptionSelect = (optionIndex) => {
     if (submitted) return;
-    setAnswers((prev) => ({
-      ...prev,
-      [currentIndex]: optionIndex,
-    }));
+    setAnswers((prev) => ({ ...prev, [currentIndex]: optionIndex }));
   };
 
   const handleNext = () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex((idx) => idx + 1);
-    }
+    if (currentIndex < questions.length - 1) setCurrentIndex((i) => i + 1);
   };
 
   const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex((idx) => idx - 1);
-    }
+    if (currentIndex > 0) setCurrentIndex((i) => i - 1);
   };
 
   const handleSubmit = () => {
@@ -134,28 +110,30 @@ export default function AptitudeTest() {
 
     let s = 0;
     questions.forEach((q, idx) => {
-      if (answers[idx] === q.correctIndex) s += 1;
+      if (answers[idx] === q.correctIndex) s++;
     });
+
+    console.log("Submitted answers:", answers);
+    console.log("Calculated score:", s);
+
     setScore(s);
     setSubmitted(true);
   };
 
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60)
-      .toString()
-      .padStart(2, "0");
-    const s = (seconds % 60).toString().padStart(2, "0");
+  const formatTime = (sec) => {
+    const m = String(Math.floor(sec / 60)).padStart(2, "0");
+    const s = String(sec % 60).padStart(2, "0");
     return `${m}:${s}`;
   };
 
   const answeredCount = Object.keys(answers).length;
   const currentQuestion = questions[currentIndex];
 
+  const percentage = score !== null ? (score / questions.length) * 100 : 0;
+  const passedCutoff = percentage >= 80;
+
   return (
     <div className="apt-page">
-      {/* <DevNav /> */}
-
-      {/* ===== Top Header ===== */}
       <header className="apt-header">
         <div className="apt-cheat-wrapper">
           {[1, 2, 3, 4, 5].map((n) => (
@@ -176,9 +154,7 @@ export default function AptitudeTest() {
         </div>
       </header>
 
-      {/* ===== Main Layout ===== */}
       <main className="apt-main">
-        {/* LEFT – Question */}
         <section className="apt-left-card">
           <div className="apt-q-header">
             <span className="apt-q-title">Aptitude Question</span>
@@ -189,24 +165,18 @@ export default function AptitudeTest() {
           <div className="apt-q-body">
             <p className="apt-q-text">{currentQuestion.text}</p>
           </div>
-          <p className="apt-tip">
-            Tip: Use Next / Previous to navigate. You can change answers any
-            time before submit.
-          </p>
+          <p className="apt-tip">Tip: Use Next/Previous to navigate.</p>
         </section>
 
-        {/* MIDDLE – Options */}
         <section className="apt-middle-card">
           <h3 className="apt-section-label">Answer Choices</h3>
           <div className="apt-options">
             {currentQuestion.options.map((opt, idx) => {
-              const isSelected = answers[currentIndex] === idx;
+              const selected = answers[currentIndex] === idx;
               return (
                 <button
                   key={idx}
-                  className={`apt-option ${
-                    isSelected ? "apt-option-selected" : ""
-                  }`}
+                  className={`apt-option ${selected ? "apt-option-selected" : ""}`}
                   onClick={() => handleOptionSelect(idx)}
                 >
                   <div className="apt-option-left">
@@ -221,7 +191,6 @@ export default function AptitudeTest() {
           </div>
         </section>
 
-        {/* RIGHT – Nav + Time + Result */}
         <aside className="apt-right-card">
           <section className="apt-nav-card">
             <h3 className="apt-section-label">Navigation</h3>
@@ -265,13 +234,32 @@ export default function AptitudeTest() {
               <div className="apt-score">
                 Score: {score} / {questions.length}
               </div>
-              <div className="apt-score-sub">
-                {score >= 8
-                  ? "Great! Strong aptitude performance."
-                  : score >= 5
-                  ? "Decent. Could improve with more practice."
-                  : "Needs improvement. Practice recommended."}
-              </div>
+
+              <div style={{ marginTop: "8px" }}>{percentage.toFixed(0)}%</div>
+
+              {passedCutoff ? (
+                <>
+                  <p style={{ color: "#4ade80", marginTop: "8px" }}>
+                    Congratulations! You qualified for the next phase 🎉
+                  </p>
+                  <button
+                    style={{
+                      marginTop: "12px",
+                      background: "#4ade80",
+                      padding: "8px 18px",
+                      borderRadius: "8px",
+                      fontWeight: "600",
+                    }}
+                    onClick={() => navigate("/phase3")}
+                  >
+                    Next Phase →
+                  </button>
+                </>
+              ) : (
+                <p style={{ color: "#f87171", marginTop: "8px" }}>
+                  Need at least 80% to continue
+                </p>
+              )}
             </section>
           )}
         </aside>

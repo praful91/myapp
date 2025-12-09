@@ -39,42 +39,96 @@ const mcqQuestions = [
   },
 ];
 
-// 5 CODING QUESTIONS
+// 5 CODING QUESTIONS (final)
 const codingQuestions = [
   {
     id: 6,
-    title: "Reverse a String",
-    desc: "Write a Python function reverse_string(s) to reverse a string without using slicing [::-1].",
-    input: `"hello"`,
-    output: `"olleh"`,
+    title: "Hollow Diamond Pattern",
+    desc:
+      "Write a Python program to print a hollow diamond pattern using '*' characters for a given integer N.",
+    input: "Input: N (e.g., 4)",
+    // solution kept here only for you (not shown in UI)
+    output: `num = int(input())
+for i in range(num):
+    if i == 0:
+        print("* " * (2 * num))
+    else:
+        print("* " * (num - i) + "  " * (4 * i) + "* " * (num - i))
+for i in range(1, num + 1):
+    if i == num:
+        print("* " * (2 * num))
+    else:
+        print("* " * i + "  " * (4 * (num - i)) + "* " * i)`,
   },
   {
     id: 7,
-    title: "Maximum Subarray Sum",
-    desc: "Implement max_subarray(nums) to return the maximum sum of a contiguous subarray.",
-    input: "[-2,1,-3,4,-1,2,1,-5,4]",
-    output: "6  (from [4,-1,2,1])",
+    title: "Remove Words of Given Length",
+    desc:
+      "Write a Python program that removes all words from a given string whose length is equal to K.",
+    input: "Input: a line of text, then K",
+    output: `words = input().split()
+k = int(input())
+result = []
+for w in words:
+    if len(w) == k:
+        continue
+    result.append(w)
+print(" ".join(result))`,
   },
   {
     id: 8,
-    title: "Two Sum",
-    desc: "Given nums and target, return indices of two numbers that add up to target (exactly one solution).",
-    input: "nums=[2,7,11,15], target=9",
-    output: "[0,1]",
+    title: "Recursive Fibonacci",
+    desc:
+      "Write a recursive function fibonacci(n) that returns the n-th Fibonacci number.",
+    input: "Input: n (position in Fibonacci sequence)",
+    output: `def fibonacci(n):
+    if n <= 1:
+        return n
+    else:
+        return fibonacci(n - 1) + fibonacci(n - 2)
+
+n = int(input())
+print(fibonacci(n))`,
   },
   {
     id: 9,
-    title: "Count Vowels",
-    desc: "Write a function count_vowels(s) that returns the number of vowels (a,e,i,o,u) in the string.",
-    input: `"machine"`,
-    output: "3",
+    title: "Matrix Max, Min and Sum",
+    desc:
+      "Given an m x n matrix of integers, print the maximum value, minimum value, and sum of all elements.",
+    input: "Input: m n, followed by m rows of n integers",
+    output: `def convert_string_to_int(lst):
+    new_list = []
+    for item in lst:
+        new_list.append(int(item))
+    return new_list
+
+m, n = input().split()
+m, n = int(m), int(n)
+nums = []
+
+for _ in range(m):
+    row = input().split()
+    row = convert_string_to_int(row)
+    nums.extend(row)
+
+print(max(nums))
+print(min(nums))
+print(sum(nums))`,
   },
   {
     id: 10,
-    title: "FizzBuzz",
-    desc: "Write a function fizzbuzz(n) that returns list from 1..n with Fizz/Buzz/FizzBuzz rules.",
-    input: "n = 5",
-    output: `[1,2,"Fizz",4,"Buzz"]`,
+    title: "Reverse String (without slicing)",
+    desc:
+      "Write a Python function reverse_string(s) to reverse a string without using slicing [::-1].",
+    input: 'Input: a single string (e.g., "hello")',
+    output: `def reverse_string(s):
+    result = ""
+    for ch in s:
+        result = ch + result
+    return result
+
+text = input()
+print(reverse_string(text))`,
   },
 ];
 
@@ -131,11 +185,27 @@ export default function Phase3UI() {
     setSubmitted(true);
   };
 
-  // simple MCQ score (for display only)
+  // simple MCQ score
   let mcqScore = 0;
   mcqQuestions.forEach((q, idx) => {
     if (mcqAnswers[idx] === q.correctIndex) mcqScore += 1;
   });
+
+  // Coding score: exact match with expected solution
+  const normalize = (str = "") =>
+    str.replace(/\r\n/g, "\n").trim(); // ignore extra blank lines at start/end
+
+  let codingScore = 0;
+  codingQuestions.forEach((q) => {
+    const userCode = codeAnswers[q.id] || "";
+    const expectedCode = q.output || "";
+    if (normalize(userCode) === normalize(expectedCode)) {
+      codingScore += 1;
+    }
+  });
+
+  const totalScore = mcqScore + codingScore; // out of 10
+  const canProceed = totalScore >= 8; // 80%
 
   return (
     <div className="p3-page">
@@ -201,10 +271,9 @@ export default function Phase3UI() {
               </h3>
               <p className="p3-code-desc">{q.desc}</p>
 
+              {/* Only show example input, NOT the solution code */}
               <p className="p3-example">
                 <strong>Example Input:</strong> {q.input}
-                <br />
-                <strong>Expected Output:</strong> {q.output}
               </p>
 
               <textarea
@@ -226,15 +295,38 @@ export default function Phase3UI() {
           <p>Coding attempted: {Object.keys(codeAnswers).length} / 5</p>
 
           {submitted ? (
-            <div className="p3-result-box">
-              <h4 className="p3-result-title">Round Submitted ✔</h4>
-              <p className="p3-result-text">
-                MCQ Score: {mcqScore} / 5
-              </p>
-              <p className="p3-result-sub">
-                Code answers will be evaluated manually / by backend.
-              </p>
-            </div>
+            <>
+              <div className="p3-result-box">
+                <h4 className="p3-result-title">Round Submitted ✔</h4>
+                <p className="p3-result-text">MCQ Score: {mcqScore} / 5</p>
+                <p className="p3-result-text">
+                  Coding Score: {codingScore} / 5
+                </p>
+                <p className="p3-result-text">
+                  Total Score: {totalScore} / 10
+                </p>
+                <p className="p3-result-sub">
+                  Coding marks are given only when the code exactly matches the
+                  expected solution.
+                </p>
+              </div>
+
+              {/* NEXT PHASE BUTTON WITH 80% TOTAL CUTOFF */}
+              <button
+                className="p3-submit-btn"
+                onClick={() => navigate("/phase4")}
+                disabled={!canProceed}
+              >
+                Next Phase (Phase 4)
+              </button>
+
+              {!canProceed && (
+                <p className="p3-warning">
+                  You need at least 80% overall (8 out of 10) to move to the
+                  next phase.
+                </p>
+              )}
+            </>
           ) : (
             <button className="p3-submit-btn" onClick={handleSubmit}>
               Submit Coding Round
